@@ -1,0 +1,4 @@
+requests~=2.31.0
+flask~=3.0.0
+pywebview~=4.2.2
+pyinstaller~=6.15.0
