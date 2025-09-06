@@ -9,6 +9,9 @@ import requests
 
 
 
+# Global dictionary to track pause status for folder downloads
+folder_pause_flags = {}
+
 class Pan123:
     def __init__(
             self,
@@ -244,116 +247,335 @@ class Pan123:
 
         return redirect_url
 
-    def download(self, file_number, download_path="download/", progress_callback=None):
+    def download(self, file_number, download_path="download/", progress_callback=None, recursive=False):
         file_detail = self.list[file_number]
-        if file_detail["Type"] == 1:
+        if file_detail["Type"] == 1 and not recursive:
+            # 文件夹但未启用递归下载，使用ZIP打包
             file_name = file_detail["FileName"] + ".zip"
-        else:
-            file_name = file_detail["FileName"]  # 文件名
+            print(f"开始下载文件夹（ZIP打包）: {file_name}")
+            down_load_url = self.link(file_number, showlink=False)
+            if down_load_url is None:
+                print("获取下载链接失败")
+                return False
+                
+            # 确保下载路径以斜杠结尾
+            download_path = download_path.rstrip("/") + "/"
             
-        print(f"开始下载: {file_name}")
-        down_load_url = self.link(file_number, showlink=False)
-        if down_load_url is None:
-            print("获取下载链接失败")
-            return False
+            # 处理下载路径
+            if not os.path.exists(download_path):
+                os.makedirs(download_path)
+            file_path = os.path.join(download_path, file_name)
+                
+            # 优先使用文件详情中的大小（更可靠）
+            file_size = file_detail["Size"]
+            content_size = file_size
             
-        # 确保下载路径以斜杠结尾
-        download_path = download_path.rstrip("/") + "/"
-        
-        # 处理下载路径
-        if not os.path.exists(download_path):
-            os.makedirs(download_path)
-        file_path = os.path.join(download_path, file_name)
+            print(f"文件大小: {content_size} 字节")
             
-        # 优先使用文件详情中的大小（更可靠）
-        file_size = file_detail["Size"]
-        content_size = file_size
-        
-        print(f"文件大小: {content_size} 字节")
-        
-        # 初始化进度信息
-        progress_info = {
-            'filename': file_name,
-            'total': content_size,
-            'downloaded': 0,
-            'percentage': 0,
-            'speed': '0K/S'
-        }
-        
-        if progress_callback:
-            progress_callback(progress_info)
+            # 初始化进度信息
+            progress_info = {
+                'filename': file_name,
+                'total': content_size,
+                'downloaded': 0,
+                'percentage': 0,
+                'speed': '0K/S'
+            }
             
-        retry_count = 0
-        max_retries = 3
-        success = False
-        
-        while not success and retry_count < max_retries:
-            try:
-                print(f"尝试下载 (重试 {retry_count+1}/{max_retries})")
-                with requests.get(down_load_url, stream=True, timeout=30) as r:
-                    r.raise_for_status()
-                    
-                    # 获取实际内容长度（如果可用）
-                    content_length = r.headers.get('Content-Length')
-                    if content_length:
-                        content_size = int(content_length)
-                        print(f"从响应头获取文件大小: {content_size} 字节")
-                        progress_info['total'] = content_size
-                        if progress_callback:
-                            progress_callback(progress_info)
-                    
-                    downloaded = 0
-                    start_time = time.time()
-                    last_update = start_time
-                    
-                    with open(file_path, "wb") as f:
-                        for chunk in r.iter_content(chunk_size=8192):
-                            if chunk:
-                                f.write(chunk)
-                                downloaded += len(chunk)
-                                
-                                # 更新进度信息
-                                progress_info['downloaded'] = downloaded
-                                progress_info['percentage'] = int((downloaded / content_size) * 100) if content_size > 0 else 0
-                                
-                                # 每秒更新速度
-                                current_time = time.time()
-                                if current_time - last_update >= 1.0:
-                                    elapsed = current_time - start_time
-                                    speed = downloaded / elapsed if elapsed > 0 else 0
-                                    speed_m = speed / 1048576
-                                    if speed_m > 1:
-                                        progress_info['speed'] = f"{speed_m:.2f}M/S"
-                                    else:
-                                        progress_info['speed'] = f"{speed_m * 1024:.2f}K/S"
-                                    
-                                    if progress_callback:
-                                        progress_callback(progress_info)
-                                    last_update = current_time
-                                
-                        # 最终进度更新
-                        if downloaded > 0:
-                            progress_info['downloaded'] = downloaded
-                            progress_info['percentage'] = 100
-                            progress_info['speed'] = "完成"
+            if progress_callback:
+                progress_callback(progress_info)
+                
+            retry_count = 0
+            max_retries = 3
+            success = False
+            
+            while not success and retry_count < max_retries:
+                try:
+                    print(f"尝试下载 (重试 {retry_count+1}/{max_retries})")
+                    with requests.get(down_load_url, stream=True, timeout=30) as r:
+                        r.raise_for_status()
+                        
+                        # 获取实际内容长度（如果可用）
+                        content_length = r.headers.get('Content-Length')
+                        if content_length:
+                            content_size = int(content_length)
+                            print(f"从响应头获取文件大小: {content_size} 字节")
+                            progress_info['total'] = content_size
                             if progress_callback:
                                 progress_callback(progress_info)
-                            print("下载完成")
-                            success = True
-                            return True
-                        else:
-                            print("下载失败：未接收到数据")
-                            
-            except (requests.exceptions.ChunkedEncodingError,
-                    requests.exceptions.ConnectionError,
-                    requests.exceptions.Timeout,
-                    requests.exceptions.RequestException) as e:
-                print(f"下载出错: {str(e)}")
-                retry_count += 1
-                time.sleep(2)
+                        
+                        downloaded = 0
+                        start_time = time.time()
+                        last_update = start_time
+                        
+                        with open(file_path, "wb") as f:
+                            for chunk in r.iter_content(chunk_size=8192):
+                                if chunk:
+                                    f.write(chunk)
+                                    downloaded += len(chunk)
+                                    
+                                    # 更新进度信息
+                                    progress_info['downloaded'] = downloaded
+                                    progress_info['percentage'] = int((downloaded / content_size) * 100) if content_size > 0 else 0
+                                    
+                                    # 每秒更新速度
+                                    current_time = time.time()
+                                    if current_time - last_update >= 1.0:
+                                        elapsed = current_time - start_time
+                                        speed = downloaded / elapsed if elapsed > 0 else 0
+                                        speed_m = speed / 1048576
+                                        if speed_m > 1:
+                                            progress_info['speed'] = f"{speed_m:.2f}M/S"
+                                        else:
+                                            progress_info['speed'] = f"{speed_m * 1024:.2f}K/S"
+                                        
+                                        if progress_callback:
+                                            progress_callback(progress_info)
+                                        last_update = current_time
+                                    
+                            # 最终进度更新
+                            if downloaded > 0:
+                                progress_info['downloaded'] = downloaded
+                                progress_info['percentage'] = 100
+                                progress_info['speed'] = "完成"
+                                if progress_callback:
+                                    progress_callback(progress_info)
+                                print("下载完成")
+                                success = True
+                                return True
+                            else:
+                                print("下载失败：未接收到数据")
+                                
+                except (requests.exceptions.ChunkedEncodingError,
+                        requests.exceptions.ConnectionError,
+                        requests.exceptions.Timeout,
+                        requests.exceptions.RequestException) as e:
+                    print(f"下载出错: {str(e)}")
+                    retry_count += 1
+                    time.sleep(2)
+                    
+            print("下载失败，超过最大重试次数")
+            return False
+        elif file_detail["Type"] == 1 and recursive:
+            # 递归下载文件夹
+            folder_name = file_detail["FileName"]
+            print(f"开始递归下载文件夹: {folder_name}")
+            return self.download_folder_recursive(file_detail, download_path, progress_callback, file_detail["FileId"])
+        else:
+            # 单个文件下载
+            file_name = file_detail["FileName"]
+            print(f"开始下载: {file_name}")
+            down_load_url = self.link(file_number, showlink=False)
+            if down_load_url is None:
+                print("获取下载链接失败")
+                return False
                 
-        print("下载失败，超过最大重试次数")
-        return False
+            # 确保下载路径以斜杠结尾
+            download_path = download_path.rstrip("/") + "/"
+            
+            # 处理下载路径
+            if not os.path.exists(download_path):
+                os.makedirs(download_path)
+            file_path = os.path.join(download_path, file_name)
+                
+            # 优先使用文件详情中的大小（更可靠）
+            file_size = file_detail["Size"]
+            content_size = file_size
+            
+            print(f"文件大小: {content_size} 字节")
+            
+            # 初始化进度信息
+            progress_info = {
+                'filename': file_name,
+                'total': content_size,
+                'downloaded': 0,
+                'percentage': 0,
+                'speed': '0K/S'
+            }
+            
+            if progress_callback:
+                progress_callback(progress_info)
+                
+            retry_count = 0
+            max_retries = 3
+            success = False
+            
+            while not success and retry_count < max_retries:
+                try:
+                    print(f"尝试下载 (重试 {retry_count+1}/{max_retries})")
+                    with requests.get(down_load_url, stream=True, timeout=30) as r:
+                        r.raise_for_status()
+                        
+                        # 获取实际内容长度（如果可用）
+                        content_length = r.headers.get('Content-Length')
+                        if content_length:
+                            content_size = int(content_length)
+                            print(f"从响应头获取文件大小: {content_size} 字节")
+                            progress_info['total'] = content_size
+                            if progress_callback:
+                                progress_callback(progress_info)
+                        
+                        downloaded = 0
+                        start_time = time.time()
+                        last_update = start_time
+                        
+                        with open(file_path, "wb") as f:
+                            for chunk in r.iter_content(chunk_size=8192):
+                                if chunk:
+                                    f.write(chunk)
+                                    downloaded += len(chunk)
+                                    
+                                    # 更新进度信息
+                                    progress_info['downloaded'] = downloaded
+                                    progress_info['percentage'] = int((downloaded / content_size) * 100) if content_size > 0 else 0
+                                    
+                                    # 每秒更新速度
+                                    current_time = time.time()
+                                    if current_time - last_update >= 1.0:
+                                        elapsed = current_time - start_time
+                                        speed = downloaded / elapsed if elapsed > 0 else 0
+                                        speed_m = speed / 1048576
+                                        if speed_m > 1:
+                                            progress_info['speed'] = f"{speed_m:.2f}M/S"
+                                        else:
+                                            progress_info['speed'] = f"{speed_m * 1024:.2f}K/S"
+                                        
+                                        if progress_callback:
+                                            progress_callback(progress_info)
+                                        last_update = current_time
+                                    
+                            # 最终进度更新
+                            if downloaded > 0:
+                                progress_info['downloaded'] = downloaded
+                                progress_info['percentage'] = 100
+                                progress_info['speed'] = "完成"
+                                if progress_callback:
+                                    progress_callback(progress_info)
+                                print("下载完成")
+                                success = True
+                                return True
+                            else:
+                                print("下载失败：未接收到数据")
+                                
+                except (requests.exceptions.ChunkedEncodingError,
+                        requests.exceptions.ConnectionError,
+                        requests.exceptions.Timeout,
+                        requests.exceptions.RequestException) as e:
+                    print(f"下载出错: {str(e)}")
+                    retry_count += 1
+                    time.sleep(2)
+                    
+            print("下载失败，超过最大重试次数")
+            return False
+
+    def download_folder_recursive(self, folder_detail, base_download_path="download/", progress_callback=None, top_folder_id=None):
+        """递归下载文件夹及其内容"""
+        folder_name = folder_detail["FileName"]
+        folder_id = folder_detail["FileId"]
+        
+        # 如果是顶级文件夹，设置top_folder_id
+        if top_folder_id is None:
+            top_folder_id = folder_id
+        
+        # 保存当前目录状态
+        current_parent = self.parent_file_id
+        current_list = self.list
+        
+        try:
+            # 进入文件夹
+            self.parent_file_id = folder_id
+            self.get_dir()
+            
+            # 创建本地文件夹
+            local_folder_path = os.path.join(base_download_path, folder_name)
+            if not os.path.exists(local_folder_path):
+                os.makedirs(local_folder_path)
+            
+            total_files = 0
+            downloaded_files = 0
+            
+            # 首先统计所有文件数量
+            for item in self.list:
+                if item["Type"] == 0:  # 文件
+                    total_files += 1
+                elif item["Type"] == 1:  # 文件夹
+                    total_files += 1  # 计数文件夹本身，后续会递归
+            
+            if progress_callback:
+                progress_callback({
+                    'filename': f"文件夹: {folder_name}",
+                    'total': total_files,
+                    'downloaded': downloaded_files,
+                    'percentage': 0,
+                    'speed': '开始下载'
+                })
+            
+            # 遍历当前文件夹内容
+            for index, item in enumerate(self.list):
+                # 检查文件夹下载是否被暂停
+                while folder_pause_flags.get(top_folder_id, False):
+                    time.sleep(1)
+                    # 更新进度显示暂停状态
+                    if progress_callback:
+                        progress_callback({
+                            'filename': f"文件夹: {folder_name}",
+                            'status': 'paused',
+                            'downloaded': downloaded_files,
+                            'total': total_files,
+                            'percentage': int((downloaded_files / total_files) * 100) if total_files > 0 else 0,
+                            'speed': '已暂停'
+                        })
+                
+                if item["Type"] == 0:  # 文件
+                    # 下载文件
+                    file_name = item["FileName"]
+                    print(f"下载文件: {file_name}")
+                    if self.download(index, local_folder_path, progress_callback):
+                        downloaded_files += 1
+                    else:
+                        print(f"文件下载失败: {file_name}")
+                    
+                    # 更新文件夹下载进度
+                    if progress_callback:
+                        percentage = int((downloaded_files / total_files) * 100) if total_files > 0 else 0
+                        progress_callback({
+                            'filename': f"文件夹: {folder_name}",
+                            'total': total_files,
+                            'downloaded': downloaded_files,
+                            'percentage': percentage,
+                            'speed': f"{downloaded_files}/{total_files} 文件",
+                            'status': 'downloading'
+                        })
+                
+                elif item["Type"] == 1:  # 文件夹
+                    # 递归下载子文件夹
+                    print(f"进入子文件夹: {item['FileName']}")
+                    if self.download_folder_recursive(item, local_folder_path, progress_callback, top_folder_id):
+                        downloaded_files += 1
+                    else:
+                        print(f"文件夹下载失败: {item['FileName']}")
+                    
+                    # 更新文件夹下载进度
+                    if progress_callback:
+                        percentage = int((downloaded_files / total_files) * 100) if total_files > 0 else 0
+                        progress_callback({
+                            'filename': f"文件夹: {folder_name}",
+                            'total': total_files,
+                            'downloaded': downloaded_files,
+                            'percentage': percentage,
+                            'speed': f"{downloaded_files}/{total_files} 文件",
+                            'status': 'downloading'
+                        })
+            
+            return True
+            
+        except Exception as e:
+            print(f"递归下载文件夹失败: {str(e)}")
+            return False
+        finally:
+            # 恢复目录状态
+            self.parent_file_id = current_parent
+            self.list = current_list
+            self.get_dir()
 
     def recycle(self):
         recycle_id = 0

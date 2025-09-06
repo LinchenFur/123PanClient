@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>123云盘客户端</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/theme-chalk/dark/css-vars.css">
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --success-color: #06d6a0;
+            --warning-color: #ffd166;
+            --danger-color: #ef476f;
+            --info-color: #118ab2;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --border-color: #e9ecef;
+            --text-color: #212529;
+            --text-secondary: #6c757d;
+            --border-radius: 10px;
+            --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            
+            /* 深色模式变量 - 默认不激活 */
+            --dark-bg-color: #121826;
+            --dark-card-bg: #1e293b;
+            --dark-border-color: #334155;
+            --dark-text-color: #e2e8f0;
+            --dark-text-secondary: #94a3b8;
+        }
+        
+        [data-theme="dark"] {
+            --bg-color: var(--dark-bg-color);
+            --card-bg: var(--dark-card-bg);
+            --border-color: var(--dark-border-color);
+            --text-color: var(--dark-text-color);
+            --text-secondary: var(--dark-text-secondary);
+        }
+        
+        [data-theme="dark"] .el-button {
+            background-color: var(--dark-card-bg);
+            border-color: var(--dark-border-color);
+            color: var(--dark-text-color);
+        }
+        
+        [data-theme="dark"] .el-button:hover {
+            background-color: #2d3748;
+            border-color: #4a5568;
+        }
+        
+        [data-theme="dark"] .el-button--primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        [data-theme="dark"] .el-button--success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+        
+        [data-theme="dark"] .el-button--warning {
+            background-color: var(--warning-color);
+            border-color: var(--warning-color);
+        }
+        
+        [data-theme="dark"] .el-button--danger {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+        
+        [data-theme="dark"] .el-button--info {
+            background-color: var(--info-color);
+            border-color: var(--info-color);
+        }
+        
+        /* 下载按钮（success）深色模式优化 */
+        /* 所有按钮类型深色模式优化 */
+        [data-theme="dark"] .el-button {
+            color: var(--dark-text-color);
+            border-color: var(--dark-border-color);
+            background-color: var(--dark-card-bg);
+        }
+        
+        [data-theme="dark"] .el-button:hover {
+            background-color: #2d3748;
+            border-color: #4a5568;
+        }
+        
+        [data-theme="dark"] .el-button--primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+        
+        [data-theme="dark"] .el-button--primary:hover {
+            background-color: #3251d1;
+            border-color: #3251d1;
+        }
+        
+        [data-theme="dark"] .el-button--success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+            color: white;
+        }
+        
+        [data-theme="dark"] .el-button--success:hover {
+            background-color: #04b48f;
+            border-color: #04b48f;
+        }
+        
+        [data-theme="dark"] .el-button--warning {
+            background-color: var(--warning-color);
+            border-color: var(--warning-color);
+            color: #2c3e50; /* 深色文字提高对比度 */
+        }
+        
+        [data-theme="dark"] .el-button--warning:hover {
+            background-color: #e6b800;
+            border-color: #e6b800;
+        }
+        
+        [data-theme="dark"] .el-button--danger {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+            color: white;
+        }
+        
+        [data-theme="dark"] .el-button--danger:hover {
+            background-color: #e05555;
+            border-color: #e05555;
+        }
+        
+        [data-theme="dark"] .el-button--info {
+            background-color: var(--info-color);
+            border-color: var(--info-color);
+            color: white;
+        }
+        
+        [data-theme="dark"] .el-button--info:hover {
+            background-color: #0f7a9c;
+            border-color: #0f7a9c;
+        }
+        
+        [data-theme="dark"] .file-card {
+            background-color: var(--dark-card-bg);
+            border-color: var(--dark-border-color);
+        }
+        
+        [data-theme="dark"] .file-card:hover {
+            border-color: var(--primary-color);
+        }
+        
+        [data-theme="dark"] .file-card.selected {
+            background-color: rgba(67, 97, 238, 0.1);
+        }
+        
+        [data-theme="dark"] .file-size {
+            color: var(--dark-text-secondary);
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        #app {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), #3a0ca3);
+            color: white;
+            padding: 0 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+        }
+        
+        [data-theme="dark"] .header h1 {
+            color: var(--dark-text-color);
+        }
+        
+        .theme-toggle-icon, .settings-icon {
+            margin-left: 15px;
+            cursor: pointer;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .theme-toggle-icon svg {
+            transition: transform 0.3s ease;
+        }
+        
+        .theme-toggle-icon:hover svg {
+            transform: scale(1.1);
+        }
+        .header h1 {
+            font-size: 22px;
+            font-weight: 600;
+            margin: 0;
+            letter-spacing: 0.5px;
+            color: white; /* 浅色模式下的文字颜色 */
+        }
+        
+        [data-theme="dark"] .header h1 {
+            color: var(--dark-text-color); /* 深色模式下的文字颜色 */
+        }
+        .path-nav {
+            background: var(--card-bg);
+            padding: 16px 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            padding: 20px;
+            gap: 20px;
+        }
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            overflow-y: auto;
+            width: 100%;
+        }
+        .file-list-container {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 24px;
+            flex: 1;
+        }
+        .downloads-container {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 24px;
+        }
+        .file-list-container h3, .downloads-container h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: var(--text-color);
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .file-card {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            transition: all 0.25s ease;
+            border: 1px solid var(--border-color);
+            background: white;
+        }
+        .file-card:hover {
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+            transform: translateY(-3px);
+            border-color: var(--primary-color);
+        }
+        .file-card.selected {
+            background-color: rgba(67, 97, 238, 0.05);
+            border-color: var(--primary-color);
+        }
+        .file-icon {
+            margin-right: 16px;
+            font-size: 28px;
+        }
+        .folder .file-icon {
+            color: var(--warning-color);
+        }
+        .file .file-icon {
+            color: var(--info-color);
+        }
+        .file-info {
+            flex: 1;
+        }
+        .file-name {
+            font-weight: 500;
+            margin-bottom: 6px;
+            font-size: 16px;
+        }
+        .file-size {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .file-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .download-item {
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            border-radius: 8px;
+            background: var(--card-bg);
+            margin-bottom: 12px;
+            border-left: 3px solid var(--success-color);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .download-item:hover {
+            transform: translateX(4px);
+        }
+        .download-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+        .download-name {
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+        .download-status {
+            font-size: 14px;
+            color: var(--info-color);
+            font-weight: 500;
+            margin-left: 12px;
+        }
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .progress-bar {
+            flex: 1;
+            height: 10px;
+            background: var(--border-color);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .progress-inner {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--success-color));
+            transition: width 0.3s ease;
+            border-radius: 5px;
+        }
+        .progress-percent {
+            font-size: 14px;
+            min-width: 40px;
+            text-align: right;
+            font-weight: 600;
+            color: var(--info-color);
+        }
+        .progress-speed {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            font-style: italic;
+        }
+        
+        .progress-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+        }
+        
+        .control-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        @media (max-width: 1024px) {
+            .path-nav .el-breadcrumb {
+                max-width: 40%;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .path-nav .el-breadcrumb {
+                max-width: 30%;
+            }
+            .path-nav .el-button {
+                padding: 6px 10px;
+            }
+        }
+        
+        .header a {
+            display: flex;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .header a:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="header">
+            <a href="https://github.com/LinchenFur/123PanClient" target="_blank" style="margin-right: 10px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" style="fill: white;">
+                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                </svg>
+            </a>
+            <h1>123云盘客户端</h1>
+            <div class="header-right">
+                <div class="theme-toggle-icon" @click="toggleDarkMode">
+                    <svg v-show="!darkMode" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2c3e50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg v-show="darkMode" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </div>
+                <!-- 设置按钮 -->
+                <div class="settings-icon" @click="openSettings">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 设置对话框 -->
+        <el-dialog v-model="settingsDialogVisible" title="设置" width="500px">
+            <el-form :model="settingsForm" label-width="180px">
+                <el-form-item label="最大并发下载数量">
+                    <el-input-number v-model="settingsForm.max_concurrent_downloads" :min="1" :max="10" />
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
+                        同时下载的文件数量限制 (1-10)
+                    </div>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="settingsDialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="saveSettings">保存</el-button>
+            </template>
+        </el-dialog>
+        
+        <!-- 顶部路径导航栏 -->
+        <div class="path-nav" style="padding: 12px 24px; background: var(--card-bg); box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative;">
+            <div style="display: flex; align-items: center; min-width: 0;">
+                <el-button type="info" @click="goBack" size="small" style="margin-right: 12px;" :disabled="pathStack.length <= 1">
+                    <i class="el-icon-back"></i> 返回上级
+                </el-button>
+                <h3 style="margin: 0 12px 0 0; white-space: nowrap; color: var(--text-color);">当前路径：</h3>
+                <el-breadcrumb separator="/" style="flex: 1; min-width: 0; overflow: hidden;">
+                    <el-breadcrumb-item v-for="path in pathStack" :key="path.id" style="overflow: hidden; text-overflow: ellipsis; color: var(--text-color);">
+                        {{ path.name }}
+                    </el-breadcrumb-item>
+                </el-breadcrumb>
+            </div>
+            <div style="position: absolute; right: 24px; top: 50%; transform: translateY(-50%); display: flex; gap: 8px;">
+                <el-button type="info" @click="goToRoot" size="small">
+                    返回根目录
+                </el-button>
+                <el-button type="primary" @click="refresh" size="small">
+                    刷新目录
+                </el-button>
+            </div>
+        </div>
+        
+        <div class="main">
+            <div class="content">
+                <div class="file-list-container">
+                    <h3 style="margin-top: 0; margin-bottom: 16px;">文件列表</h3>
+                    <div style="margin-bottom: 16px;">
+                        <el-button type="primary" @click="batchDownload" size="small" :disabled="selectedFiles.length === 0">
+                            批量下载 ({{ selectedFiles.length }})
+                        </el-button>
+                    </div>
+                    <div class="file-list">
+                        <div v-for="(file, index) in files" :key="index"
+                             :class="['file-card', file.Type === 1 ? 'folder' : 'file', { 'selected': selectedFiles.includes(file.FileNum) }]"
+                             @click="toggleFileSelection(file.FileNum)">
+                            <div class="file-icon">
+                                <i v-if="file.Type === 1" class="el-icon-folder"></i>
+                                <i v-else class="el-icon-document"></i>
+                            </div>
+                            <div class="file-info">
+                                <div class="file-name">{{ file.FileName }}</div>
+                                <div class="file-size" v-if="file.Type === 0">{{ formatSize(file.Size) }}</div>
+                            </div>
+                            <div class="file-actions">
+                                <el-button v-if="file.Type === 1" size="small" @click.stop="openFolder({...file, el: $event.currentTarget})" type="warning" plain>
+                                    打开
+                                </el-button>
+                                <el-button v-else size="small" type="success" @click.stop="downloadFile(file)" plain>
+                                    下载
+                                </el-button>
+                                <el-button size="small" type="danger" @click.stop="deleteFile(file)" plain>
+                                    删除
+                                </el-button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="downloads-container" v-if="downloads.length > 0">
+                    <h3 style="margin-top: 0; margin-bottom: 16px;">下载进度</h3>
+                    <div class="downloads-list">
+                        <div v-for="item in downloads" :key="item.id" class="download-item">
+                            <div class="download-header">
+                                <div class="download-name">{{ item.fileName }}</div>
+                                <div class="download-status">{{ getStatusText(item) }}</div>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-bar">
+                                    <div class="progress-inner" :style="{ width: item.percentage + '%' }"></div>
+                                </div>
+                                <div class="progress-percent">{{ item.percentage }}%</div>
+                            </div>
+                            <div class="progress-controls" v-if="item.percentage < 100 || item.status === 'paused'">
+                                <div class="progress-speed">速度: {{ item.speed }}</div>
+                                <div class="control-buttons">
+                                    <el-button v-if="item.status !== 'paused'" size="mini" @click="pauseDownload(item)" type="warning">
+                                        暂停
+                                    </el-button>
+                                    <el-button v-else size="mini" @click="resumeDownload(item)" type="success">
+                                        继续
+                                    </el-button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+        const app = createApp({
+            setup() {
+                const files = ref([]);
+                const downloads = ref([]);
+                const pathStack = ref([{ id: 0, name: '根目录' }]);
+                const selectedFiles = ref([]);
+                const batchQueue = ref([]);
+                const currentDownloading = ref(null);
+                const isGoingBack = ref(false);
+                const darkMode = ref(false);
+                const settingsDialogVisible = ref(false);
+                const settingsForm = ref({
+                    max_concurrent_downloads: 2
+                });
+                
+                // 应用主题样式
+                const applyTheme = (isDark) => {
+                    if (isDark) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                        localStorage.setItem('theme', 'dark');
+                    } else {
+                        document.documentElement.removeAttribute('data-theme');
+                        localStorage.setItem('theme', 'light');
+                    }
+                };
+                
+                // 切换深色模式
+                const toggleDarkMode = () => {
+                    darkMode.value = !darkMode.value;
+                    applyTheme(darkMode.value);
+                    console.log(`深色模式已${darkMode.value ? '启用' : '禁用'}`);
+                };
+                
+                // 初始化主题
+                const initTheme = () => {
+                    const savedTheme = localStorage.getItem('theme');
+                    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    
+                    if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+                        darkMode.value = true;
+                        applyTheme(true);
+                        console.log('初始化深色模式');
+                    } else {
+                        darkMode.value = false;
+                        applyTheme(false);
+                        console.log('初始化浅色模式');
+                    }
+                };
+                
+                // 获取文件列表
+                const listFiles = async () => {
+                    try {
+                        const response = await fetch('/api/files');
+                        if (!response.ok) {
+                            throw new Error(`请求失败: ${response.status}`);
+                        }
+                        const data = await response.json();
+                        files.value = data.files;
+                    } catch (error) {
+                        console.error('获取文件列表失败:', error);
+                        // 显示错误信息
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'error-message';
+                        errorDiv.style.color = 'red';
+                        errorDiv.style.padding = '10px';
+                        errorDiv.style.marginBottom = '16px';
+                        errorDiv.textContent = `获取文件列表失败: ${error.message}`;
+                        
+                        // 插入到文件列表容器顶部
+                        const container = document.querySelector('.file-list-container');
+                        if (container) {
+                            container.insertBefore(errorDiv, container.firstChild);
+                        }
+                    }
+                };
+                
+                // 打开文件夹（带防抖）
+                let lastClickTime = 0;
+                const openFolder = (file) => {
+                    if (file.Type !== 1) return;
+                    
+                    // 防抖处理：300ms内只响应一次点击
+                    const now = Date.now();
+                    if (now - lastClickTime < 300) return;
+                    lastClickTime = now;
+                    
+                    // 禁用按钮防止重复点击
+                    const originalText = file.el?.innerText;
+                    if (file.el) {
+                        file.el.innerText = '加载中...';
+                        file.el.disabled = true;
+                    }
+                    
+                    fetch(`/api/cd/${file.FileId}`, {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        files.value = data.files;
+                        // 确保路径栈中不存在当前文件夹
+                        if (!pathStack.value.some(p => p.id === file.FileId)) {
+                            pathStack.value.push({
+                                id: file.FileId,
+                                name: file.FileName
+                            });
+                        }
+                    })
+                    .finally(() => {
+                        // 恢复按钮状态
+                        if (file.el && originalText) {
+                            file.el.innerText = originalText;
+                            file.el.disabled = false;
+                        }
+                    });
+                };
+                
+                // 下载文件
+                const downloadFile = (file) => {
+                    // 调用后端下载API
+                    fetch(`/api/download/${file.FileNum}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('下载请求失败');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.status === 'started') {
+                                // 添加到下载列表
+                                downloads.value.push({
+                                    fileName: file.FileName,
+                                    id: file.FileNum,
+                                    downloaded: 0,
+                                    total: file.Size,
+                                    percentage: 0,
+                                    speed: '0K/S',
+                                    status: 'downloading',
+                                    type: 'file'
+                                });
+                                
+                                // 启动进度轮询
+                                const intervalId = setInterval(() => {
+                                    fetch('/api/progress')
+                                        .then(res => res.json())
+                                        .then(progressData => {
+                                            const fileProgress = progressData[file.FileName];
+                                            if (fileProgress) {
+                                                const downloadIndex = downloads.value.findIndex(d => d.fileName === file.FileName);
+                                                if (downloadIndex !== -1) {
+                                                    downloads.value[downloadIndex].downloaded = fileProgress.downloaded;
+                                                    downloads.value[downloadIndex].total = fileProgress.total;
+                                                    downloads.value[downloadIndex].percentage = fileProgress.percentage;
+                                                    downloads.value[downloadIndex].speed = fileProgress.speed;
+                                                    downloads.value[downloadIndex].status = fileProgress.status || 'downloading';
+                                                    
+                                                    // 下载完成后清理
+                                                    if (fileProgress.percentage === 100) {
+                                                        clearInterval(intervalId);
+                                                        setTimeout(() => {
+                                                            downloads.value = downloads.value.filter(d => d.fileName !== file.FileName);
+                                                        }, 3000);
+                                                    }
+                                                }
+                                            }
+                                        });
+                                }, 1000);
+                            } else {
+                                console.error('下载启动失败', data);
+                                ElMessage.error('下载启动失败');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('下载请求失败:', error);
+                            ElMessage.error('下载请求失败');
+                        });
+                };
+                
+                // 删除文件
+                const deleteFile = (file) => {
+                    // 实现删除API调用
+                    console.log('删除文件:', file.FileName);
+                };
+                
+                // 刷新目录
+                const refresh = () => {
+                    listFiles();
+                };
+                
+                // 返回上级目录（带防抖和加载状态）
+                const goBack = () => {
+                    if (pathStack.value.length <= 1 || isGoingBack.value) return;
+                    
+                    isGoingBack.value = true;
+                    
+                    // 获取上一级目录ID
+                    const prevFolderId = pathStack.value[pathStack.value.length - 2].id;
+                    
+                    // 发送API请求切换目录
+                    fetch(`/api/cd/${prevFolderId}`, {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        files.value = data.files;
+                        // 移除当前目录
+                        pathStack.value.pop();
+                    })
+                    .catch(error => {
+                        console.error('切换目录失败:', error);
+                        ElMessage.error('切换目录失败');
+                    })
+                    .finally(() => {
+                        isGoingBack.value = false;
+                    });
+                };
+                
+                // 返回根目录
+                const goToRoot = () => {
+                    fetch(`/api/cd/0`, {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        files.value = data.files;
+                        // 重置路径栈到根目录
+                        pathStack.value = [pathStack.value[0]];
+                    })
+                    .catch(error => {
+                        console.error('返回根目录失败:', error);
+                        ElMessage.error('返回根目录失败');
+                    });
+                };
+                
+                // 格式化文件大小
+                const formatSize = (size) => {
+                    if (size > 1024 * 1024) {
+                        return (size / (1024 * 1024)).toFixed(2) + ' MB';
+                    } else if (size > 1024) {
+                        return (size / 1024).toFixed(2) + ' KB';
+                    }
+                    return size + ' B';
+                };
+                
+                // 切换文件选择状态
+                const toggleFileSelection = (fileNum) => {
+                    const index = selectedFiles.value.indexOf(fileNum);
+                    if (index === -1) {
+                        selectedFiles.value.push(fileNum);
+                    } else {
+                        selectedFiles.value.splice(index, 1);
+                    }
+                };
+                
+
+                // 批量下载选中的文件和文件夹
+                const batchDownload = () => {
+                    if (selectedFiles.value.length === 0) return;
+                    
+                    console.log('批量下载开始，选中的文件:', selectedFiles.value);
+                    
+                    // 将选中的文件和文件夹加入下载队列
+                    selectedFiles.value.forEach(fileNum => {
+                        const file = files.value.find(f => f.FileNum === fileNum);
+                        if (file) {
+                            console.log('处理选中的项目:', file.FileName, '类型:', file.Type === 0 ? '文件' : '文件夹');
+                            if (file.Type === 0) { // 文件
+                                downloadFile(file);
+                            } else if (file.Type === 1) { // 文件夹
+                                console.log('调用下载文件夹函数:', file.FileName);
+                                downloadFolder(file);
+                            }
+                        } else {
+                            console.error('未找到文件，FileNum:', fileNum);
+                        }
+                    });
+                    
+                    // 清空选择
+                    selectedFiles.value = [];
+                };
+
+                // 下载文件夹（递归下载）
+                const downloadFolder = (folder) => {
+                    console.log('开始下载文件夹:', folder.FileName, 'FileNum:', folder.FileNum);
+                    
+                    // 调用后端下载API，添加recursive参数
+                    fetch(`/api/download/${folder.FileNum}?recursive=true`)
+                        .then(response => {
+                            console.log('API响应状态:', response.status, response.statusText);
+                            if (!response.ok) {
+                                throw new Error('下载请求失败: ' + response.status);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log('API响应数据:', data);
+                            if (data.status === 'started') {
+                                console.log('文件夹下载已启动:', folder.FileName);
+                                // 添加到下载列表
+                                downloads.value.push({
+                                    fileName: `文件夹: ${folder.FileName}`,
+                                    id: folder.FileNum,
+                                    downloaded: 0,
+                                    total: 1, // 文件夹下载使用文件计数
+                                    percentage: 0,
+                                    speed: '开始下载',
+                                    status: 'downloading',
+                                    type: 'folder'
+                                });
+                                
+                                // 启动进度轮询
+                                const intervalId = setInterval(() => {
+                                    fetch('/api/progress')
+                                        .then(res => res.json())
+                                        .then(progressData => {
+                                            console.log('进度数据:', progressData);
+                                            const folderProgress = progressData[`文件夹: ${folder.FileName}`];
+                                            if (folderProgress) {
+                                                console.log('找到文件夹进度:', folderProgress);
+                                                const downloadIndex = downloads.value.findIndex(d => d.id === folder.FileNum);
+                                                if (downloadIndex !== -1) {
+                                                    downloads.value[downloadIndex].downloaded = folderProgress.downloaded;
+                                                    downloads.value[downloadIndex].total = folderProgress.total;
+                                                    downloads.value[downloadIndex].percentage = folderProgress.percentage;
+                                                    downloads.value[downloadIndex].speed = folderProgress.speed;
+                                                    downloads.value[downloadIndex].status = folderProgress.status || 'downloading';
+                                                    
+                                                    // 下载完成后清理
+                                                    if (folderProgress.percentage === 100) {
+                                                        console.log('文件夹下载完成:', folder.FileName);
+                                                        clearInterval(intervalId);
+                                                        setTimeout(() => {
+                                                            downloads.value = downloads.value.filter(d => d.id !== folder.FileNum);
+                                                        }, 3000);
+                                                    }
+                                                }
+                                            } else {
+                                                console.log('未找到文件夹进度信息');
+                                            }
+                                        })
+                                        .catch(error => {
+                                            console.error('获取进度失败:', error);
+                                        });
+                                }, 1000);
+                            } else {
+                                console.error('文件夹下载启动失败', data);
+                                ElMessage.error('文件夹下载启动失败');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('文件夹下载请求失败:', error);
+                            ElMessage.error('文件夹下载请求失败: ' + error.message);
+                        });
+                };
+                
+                // 打开设置对话框
+                const openSettings = async () => {
+                    try {
+                        // 获取当前设置
+                        const response = await fetch('/api/settings');
+                        if (response.ok) {
+                            const data = await response.json();
+                            settingsForm.value = data;
+                        }
+                        settingsDialogVisible.value = true;
+                    } catch (error) {
+                        console.error('获取设置失败:', error);
+                        ElMessage.error('获取设置失败');
+                        settingsDialogVisible.value = true;
+                    }
+                };
+
+                // 保存设置
+                const saveSettings = async () => {
+                    try {
+                        const response = await fetch('/api/settings', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(settingsForm.value)
+                        });
+
+                        if (response.ok) {
+                            ElMessage.success('设置已保存');
+                            settingsDialogVisible.value = false;
+                        } else {
+                            throw new Error('保存设置失败');
+                        }
+                    } catch (error) {
+                        console.error('保存设置失败:', error);
+                        ElMessage.error('保存设置失败');
+                    }
+                };
+
+                onMounted(() => {
+                    initTheme();
+                    // 检查登录状态并获取文件
+                    fetch('/api/check_login')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.loggedIn) {
+                                listFiles();
+                            } else {
+                                window.location.href = 'login.html';
+                            }
+                        });
+                });
+                
+                // 获取状态文本
+                const getStatusText = (item) => {
+                    if (item.percentage === 100) {
+                        return '完成';
+                    } else if (item.status === 'paused') {
+                        return '已暂停';
+                    } else {
+                        return '下载中';
+                    }
+                };
+
+                // 暂停下载
+                const pauseDownload = async (item) => {
+                    try {
+                        const response = await fetch(`/api/pause/${item.id}`, {
+                            method: 'POST'
+                        });
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.status === 'paused') {
+                                item.status = 'paused';
+                                ElMessage.success('下载已暂停');
+                            } else if (data.error) {
+                                ElMessage.warning(data.error);
+                            }
+                        } else {
+                            // 处理错误响应
+                            const errorData = await response.json().catch(() => ({ error: '暂停失败' }));
+                            ElMessage.warning(errorData.error || '暂停失败');
+                        }
+                    } catch (error) {
+                        console.error('暂停下载失败:', error);
+                        ElMessage.error('暂停下载失败');
+                    }
+                };
+
+                // 继续下载
+                const resumeDownload = async (item) => {
+                    try {
+                        const response = await fetch(`/api/resume/${item.id}`, {
+                            method: 'POST'
+                        });
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.status === 'resumed') {
+                                item.status = 'downloading';
+                                ElMessage.success('下载已继续');
+                            } else if (data.error) {
+                                ElMessage.warning(data.error);
+                            }
+                        } else {
+                            // 处理错误响应
+                            const errorData = await response.json().catch(() => ({ error: '继续失败' }));
+                            ElMessage.warning(errorData.error || '继续失败');
+                        }
+                    } catch (error) {
+                        console.error('继续下载失败:', error);
+                        ElMessage.error('继续下载失败');
+                    }
+                };
+
+                return {
+                    files,
+                    downloads,
+                    pathStack,
+                    selectedFiles,
+                    openFolder,
+                    downloadFile,
+                    deleteFile,
+                    refresh,
+                    goBack,
+                    goToRoot,
+                    formatSize,
+                    toggleFileSelection,
+                    batchDownload,
+                    darkMode,
+                    toggleDarkMode,
+                    settingsDialogVisible,
+                    settingsForm,
+                    openSettings,
+                    saveSettings,
+                    getStatusText,
+                    pauseDownload,
+                    resumeDownload
+                };
+            }
+        });
+        
+        app.use(ElementPlus);
+        app.mount('#app');
+    </script>
+</body>
+</html>

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>123云盘 - 登录</title>
+    <style>
+        :root {
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --text-secondary: #34495e;
+            --input-border: #ddd;
+            --primary-color: #3498db;
+            --primary-hover: #2980b9;
+            --error-color: #e74c3c;
+            
+            /* 深色模式变量 */
+            --dark-bg-color: #121826;
+            --dark-card-bg: #1e293b;
+            --dark-text-color: #e2e8f0;
+            --dark-text-secondary: #94a3b8;
+            --dark-input-border: #334155;
+        }
+        
+        [data-theme="dark"] {
+            --bg-color: var(--dark-bg-color);
+            --card-bg: var(--dark-card-bg);
+            --text-color: var(--dark-text-color);
+            --text-secondary: var(--dark-text-secondary);
+            --input-border: var(--dark-input-border);
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .login-container {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 350px;
+            text-align: center;
+            color: var(--text-color);
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        h2 {
+            color: var(--text-color);
+            margin-bottom: 25px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--input-border);
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+        .error {
+            color: var(--error-color);
+            margin-top: 15px;
+            display: none;
+        }
+        
+        /* 深色模式切换按钮 */
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: var(--card-bg);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .theme-toggle svg {
+            width: 24px;
+            height: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="theme-toggle" id="theme-toggle">
+        <svg id="light-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg id="dark-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </div>
+    
+    <div class="login-container">
+        <h2>登录123云盘</h2>
+        <div class="input-group">
+            <label for="username">用户名</label>
+            <input type="text" id="username" placeholder="请输入用户名">
+        </div>
+        <div class="input-group">
+            <label for="password">密码</label>
+            <input type="password" id="password" placeholder="请输入密码">
+        </div>
+        <button id="login-btn">登录</button>
+        <div id="error-message" class="error"></div>
+    </div>
+
+    <script>
+        // 全局登录状态标志
+        let isLoggingIn = false;
+        
+        // 登录处理函数
+        async function handleLogin() {
+            // 防止重复提交
+            if (isLoggingIn) return;
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('error-message');
+            const loginBtn = document.getElementById('login-btn');
+            
+            if (!username || !password) {
+                errorMsg.textContent = '请输入用户名和密码';
+                errorMsg.style.display = 'block';
+                return;
+            }
+            
+            errorMsg.style.display = 'none';
+            
+            // 设置登录状态
+            isLoggingIn = true;
+            loginBtn.disabled = true;
+            const originalText = loginBtn.textContent;
+            loginBtn.textContent = '登录中...';
+            
+            try {
+                // 初始化应用
+                const initResponse = await fetch('/api/init', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+                
+                if (!initResponse.ok) {
+                    const error = await initResponse.json();
+                    throw new Error(error.error || '初始化失败');
+                }
+                
+                // 执行登录
+                const loginResponse = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+                
+                if (loginResponse.ok) {
+                    // 登录成功，跳转到主界面
+                    window.location.href = '/';
+                } else {
+                    const error = await loginResponse.json();
+                    throw new Error(error.message || '登录失败');
+                }
+            } catch (error) {
+                errorMsg.textContent = error.message;
+                errorMsg.style.display = 'block';
+                console.error('登录错误:', error);
+            } finally {
+                // 重置登录状态
+                isLoggingIn = false;
+                loginBtn.disabled = false;
+                loginBtn.textContent = originalText;
+            }
+        }
+        
+        // 初始化主题
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.getElementById('light-icon').style.display = 'none';
+                document.getElementById('dark-icon').style.display = 'block';
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+                document.getElementById('light-icon').style.display = 'block';
+                document.getElementById('dark-icon').style.display = 'none';
+            }
+        }
+        
+        // 切换深色模式
+        function toggleDarkMode() {
+            const isDark = document.documentElement.hasAttribute('data-theme');
+            if (isDark) {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+                document.getElementById('light-icon').style.display = 'block';
+                document.getElementById('dark-icon').style.display = 'none';
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+                document.getElementById('light-icon').style.display = 'none';
+                document.getElementById('dark-icon').style.display = 'block';
+            }
+        }
+        
+        // 页面加载时尝试自动登录并初始化主题
+        document.addEventListener('DOMContentLoaded', async function() {
+            initTheme();
+            
+            try {
+                const response = await fetch('/api/init', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({})
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.loggedIn) {
+                        window.location.href = '/';
+                    }
+                }
+            } catch (error) {
+                console.error('自动登录失败', error);
+            }
+        });
+        
+        // 事件绑定
+        document.getElementById('login-btn').addEventListener('click', handleLogin);
+        document.getElementById('theme-toggle').addEventListener('click', toggleDarkMode);
+        
+        // 支持按Enter键登录
+        document.getElementById('password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleLogin();
+            }
+        });
+        
+        // 页面加载时初始化主题
+        initTheme();
+    </script>
+</body>
+</html>
